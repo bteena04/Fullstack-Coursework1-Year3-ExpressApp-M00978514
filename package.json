@@ -1,0 +1,28 @@
+{
+  "name": "fullstack-coursework1-year3-expressapp-m00978514",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lessons.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bteena04/Fullstack-Coursework1-Year3-ExpressApp-M00978514.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bteena04/Fullstack-Coursework1-Year3-ExpressApp-M00978514/issues"
+  },
+  "homepage": "https://github.com/bteena04/Fullstack-Coursework1-Year3-ExpressApp-M00978514#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mongodb": "^7.0.0",
+    "nodemon": "^3.1.10",
+    "properties-reader": "^2.3.0"
+  }
+}
