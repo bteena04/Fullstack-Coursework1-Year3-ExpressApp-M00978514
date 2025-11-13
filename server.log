@@ -1,0 +1,5 @@
+Received request at 13 Nov 2025, 11:46:18: Method = GET | URL = /lessons/guitar2.jpg
+Received request at 13 Nov 2025, 11:48:01: Method = GET | URL = /lessons/guitar2.jpg
+Received request at 13 Nov 2025, 11:48:22: Method = GET | URL = /lessons/guitar2.jpg
+Received request at 13 Nov 2025, 11:50:21: Method = GET | URL = /lessons/guitar2.jpg
+Error 404: Lesson image /guitar2.jpg was not found.
