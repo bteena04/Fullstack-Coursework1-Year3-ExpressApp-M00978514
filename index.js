@@ -61,6 +61,11 @@ const logFile = path.join(__dirname, 'server.log');
 
 // ----------------------------- Define Middleware and Routes -----------------------------
 
+// Root route to confirm server is running.
+app.get('/', req,res =>{
+    res.send("Backend server using express and MongoDB is running.");
+})
+
 // Logger middleware that output all requests to the server console.
 app.use((req, res, next) => {
     const now = new Date(); // store current date and time.
