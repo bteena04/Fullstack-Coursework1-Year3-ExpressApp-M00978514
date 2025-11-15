@@ -62,9 +62,9 @@ const logFile = path.join(__dirname, 'server.log');
 // ----------------------------- Define Middleware and Routes -----------------------------
 
 // Root route to confirm server is running.
-app.get('/', req,res =>{
+app.get('/', (req,res) =>{
     res.send("Backend server using express and MongoDB is running.");
-})
+});
 
 // Logger middleware that output all requests to the server console.
 app.use((req, res, next) => {
@@ -78,7 +78,7 @@ app.use((req, res, next) => {
         if (err) console.error('Error writing to log file', err);
     });
     next();
-})
+});
 
 // Static file middleware to serve lesson images and an error message if the image file is not found.
 app.use('/lessons', express.static(path.join(__dirname,'public/images/lessons'))); // serve lesson images from 'images/lessons' directory.))
@@ -93,7 +93,7 @@ app.use('/lessons',(req, res) => {
     fs.appendFile(logFile, logMessage, (err) => {
         if (err) console.error('Error writing to log file', err);
     });
-})
+});
 
 // Middleware: Attach collection to req
 app.param('collectionName', (req, res, next, collectionName) => {
