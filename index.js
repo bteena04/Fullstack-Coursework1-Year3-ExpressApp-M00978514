@@ -74,8 +74,6 @@ app.get('/', (req,res) =>{
             message: "Backend server is running and connected to database.",
             dbConnected: true
         });
-        console.log("Database connection status checked: connected.");
-
     } else {
         res.status(500).send({
             status: "error",
@@ -160,10 +158,31 @@ app.post('/checkout/place-order', async (req, res) => {
     } catch(err){
         if(err.isJoi){
             const errorMessages = err.details.map(details => details.message);
+            console.log("Order validation errors:", errorMessages);
             return res.status(400).json({message: "Invalid order data", errors: errorMessages});
         }
         console.error("Error placing order:", err);
         res.status(500).send({message: "Error placing order"});
+    }
+});
+
+// Get item by ID
+app.get('/collections/:collectionName/:id',async(req,res)=>{
+    const id= req.params.id;
+
+    try{
+        const item =  await req.collection.findOne({_id: new ObjectId(id)})
+
+        // if item not found
+        if(!item){
+            return res.send(404).json({message: "Item not found"});
+        }
+
+        // return the item
+        res.json(item);
+    } catch(err){
+        console.error("Error fetching item by ID:", err);
+        res.status(500).send({message: "Error fetching item"});
     }
 });
 
