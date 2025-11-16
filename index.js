@@ -7,6 +7,9 @@ const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
 const PropertiesReader = require("properties-reader");
 const fs = require('fs');
+const { orderSchema } = require("./helper/orderValidator.js");
+
+
 
 // Create the express app.
 const app = express();
@@ -56,21 +59,55 @@ async function connectDB() {
 // Connect to the database when the server starts.
 connectDB();
 
+
+
 // ------------------------------ Create a logger file -----------------------------
 const logFile = path.join(__dirname, 'server.log');
 
 // ----------------------------- Define Middleware and Routes -----------------------------
 
-// Root route to confirm server is running.
+// Root route to confirm server is running and database connection status.
 app.get('/', (req,res) =>{
-    res.send("Backend server using express and MongoDB is running.");
+    if(db1){
+        res.send({
+            status: "ok",
+            message: "Backend server is running and connected to database.",
+            dbConnected: true
+        });
+        console.log("Database connection status checked: connected.");
+
+    } else {
+        res.status(500).send({
+            status: "error",
+            message: "Backend server is running but unable to connect to database.",
+            dbConnected: false
+        });
+    }
+});
+
+// Static file middleware to serve lesson images and an error message if the image file is not found.
+app.use('/lesson-images', express.static(path.join(__dirname,'public/images/lessons'))); // serve lesson images from 'images/lessons' directory.))
+
+// Fallback route for handling 404 errors for lessons static files.
+app.use('/lesson-images',(req, res) => {
+    const now = new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'medium' });
+    const logMessage = `[${now}] 404: Lesson image ${req.url} not found`;
+    console.log(logMessage);
+
+    // Append to log file
+    fs.appendFile(logFile, logMessage, (err) => {
+        if (err) console.error('Error writing to log file', err);
+    });
+
+    res.status(404).send({ error: `Lesson image ${req.url} was not found.` });
 });
 
 // Logger middleware that output all requests to the server console.
 app.use((req, res, next) => {
     const now = new Date(); // store current date and time.
     const formattedDateTime = now.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'medium' }); // format date and time.
-    const logMessage = `Received request at ${formattedDateTime}: Method = ${req.method} | URL = ${req.url}\n`;
+
+    const logMessage = `[${formattedDateTime}] ${req.method} ${req.url}\n`;
     console.log(logMessage.trim());
 
     // Append to log file
@@ -80,45 +117,53 @@ app.use((req, res, next) => {
     next();
 });
 
-// Static file middleware to serve lesson images and an error message if the image file is not found.
-app.use('/lessons', express.static(path.join(__dirname,'public/images/lessons'))); // serve lesson images from 'images/lessons' directory.))
-
-// Fallback route for handling 404 errors for lessons static files.
-app.use('/lessons',(req, res) => {
-    const logMessage = `Error 404: Lesson image ${req.url} was not found.\n`;
-    res.status(404).send(`Lesson image ${req.url} was not found.`);
-    console.log(`Error 404: Lesson image ${req.url} was not found.`);
-
-    // Append to log file
-    fs.appendFile(logFile, logMessage, (err) => {
-        if (err) console.error('Error writing to log file', err);
-    });
-});
-
-// Middleware: Attach collection to req
-app.param('collectionName', (req, res, next, collectionName) => {
-    try {
-        if (!db1) throw new Error("DB not connected yet");
-        req.collection = db1.collection(collectionName);
-        console.log("Middleware set collection:", req.collection.collectionName);
-        next();
-    } catch (err) {
-        console.error("Error in collection middleware:", err);
-        res.status(500).send("Collection middleware error");
+// Middleware to check DB connection for /collections routes.
+app.use('/collections', (req,res,next) => {
+    if(!db1){
+        console.log("Database not connected.");
+        return res.status(500).send({message:" Database not connected. Please try again later."});
     }
+    next();
 });
 
-// -----------------------------
+// Attach collection to req
+app.param('collectionName', (req, res, next, collectionName) => {
+    req.collection = db1.collection(collectionName)
+    next();
+});
+
 // GET all documents
 app.get('/collections/:collectionName', async (req, res) => {
-    console.log("Requesting collection:", req.params.collectionName);
-    console.log("Mongo collection object:", req.collection);
+    // console.log("Requesting collection:", req.params.collectionName);
+    // console.log("Mongo collection object:", req.collection);
     try {
         const docs = await req.collection.find({}).toArray();
-        console.log("Number of documents fetched:", docs.length);
         res.json(docs);
     } catch (err) {
         console.error("Error fetching collection:", err);
         res.status(500).send("Error fetching data");
     }
 });
+
+// POST to place an order.
+app.post('/checkout/place-order', async (req, res) => {
+    try {
+        // Validate order data.
+        const validatedOrder = await orderSchema.validateAsync(req.body, {abortEarly: false});
+
+        const result = await db1.collection("orders").insertOne(validatedOrder);
+        
+        res.status(201).send({
+            message: "Order placed successfully",
+            orderId: result.insertedId
+        });
+    } catch(err){
+        if(err.isJoi){
+            const errorMessages = err.details.map(details => details.message);
+            return res.status(400).json({message: "Invalid order data", errors: errorMessages});
+        }
+        console.error("Error placing order:", err);
+        res.status(500).send({message: "Error placing order"});
+    }
+});
+
