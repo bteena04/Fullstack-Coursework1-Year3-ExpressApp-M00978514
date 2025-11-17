@@ -186,3 +186,28 @@ app.get('/collections/:collectionName/:id',async(req,res)=>{
     }
 });
 
+// Update item by ID and attribute name.
+app.put('/collections/:collectionName/:id', async (req, res) => {
+    const id = req.params.id;
+    const updatedData = req.body;
+    const attributeName = req.query.attribute; // Get attribute name from query parameter
+    const updatedValue = updatedData[attributeName];
+
+    if(!attributeName){
+        return res.status(400).json({message: "Attribute name to update is required as a query parameter."});
+    }
+
+    try{
+        const result = await req.collection.updateOne(
+            {_id: new ObjectId(id)},
+            { $set: {[attributeName]: updatedValue} }
+        );
+
+        if (result.matchedCount === 0) return res.status(404).json({message: "Lesson was not found."});
+        res.json({message: "Lesson updated successfully."});
+    } catch(err){
+        console.error("Error updating item:", err); 
+        res.status(500).send({message: "Error updating lesson."});
+    }
+})
+
