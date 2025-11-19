@@ -8,6 +8,8 @@ const path = require("path");
 const PropertiesReader = require("properties-reader");
 const fs = require('fs');
 const { orderSchema } = require("./helper/orderValidator.js");
+const { number } = require("joi");
+const { text } = require("stream/consumers");
 
 
 
@@ -166,16 +168,53 @@ app.post('/checkout/place-order', async (req, res) => {
     }
 });
 
+// Get lesson item(s) by search query.
+app.get('/collections/:collectionName/search', async (req, res) => {
+    const searchValue = req.query.search;
+
+    if (!searchValue) {
+        // return default all items if no search parameter provided.
+        return res.status(400).json({ message: "Missing search parameter" });
+    }
+
+    // Check search value field type.
+    let isValueNumber = /^\d+(\.\d+)?$/.test(searchValue);
+    let numericSearchValue = Number(searchValue);
+
+    const textFields = ["description","subject","location"];
+    const numberFields = ["price", "available"];
+    const textRegex = { $regex: searchValue, $options: "i"};
+    
+    let filters = [];
+
+    // Add text search fields.
+    filters.push(...textFields.map(field=> ({ [field] : textRegex})));
+
+    // Add number search fields.
+    filters.push(...numberFields.map(field => ({ [field]: numericSearchValue })))
+
+    // Create the filter query.
+    const filterQuery = { $or: filters};
+
+    try {
+        const lessons = await req.collection.find(filterQuery).toArray();
+        res.json(lessons);
+    } catch (err) {
+        res.status(500).json({ message: "Search error", error: err.message });
+    }
+});
+
+
 // Get item by ID
 app.get('/collections/:collectionName/:id',async(req,res)=>{
     const id= req.params.id;
 
-    try{
+    try{        
         const item =  await req.collection.findOne({_id: new ObjectId(id)})
 
         // if item not found
         if(!item){
-            return res.send(404).json({message: "Item not found"});
+            return res.status(404).json({message: "Item not found"});
         }
 
         // return the item
@@ -186,21 +225,19 @@ app.get('/collections/:collectionName/:id',async(req,res)=>{
     }
 });
 
-// Update item by ID and attribute name.
+// Update item by ID.
 app.put('/collections/:collectionName/:id', async (req, res) => {
     const id = req.params.id;
     const updatedData = req.body;
-    const attributeName = req.query.attribute; // Get attribute name from query parameter
-    const updatedValue = updatedData[attributeName];
-
-    if(!attributeName){
-        return res.status(400).json({message: "Attribute name to update is required as a query parameter."});
+    
+    if(!updatedData){             
+        return res.status(400).json({message: "Attribute name to update is required"});
     }
 
     try{
         const result = await req.collection.updateOne(
             {_id: new ObjectId(id)},
-            { $set: {[attributeName]: updatedValue} }
+            { $set: updatedData }
         );
 
         if (result.matchedCount === 0) return res.status(404).json({message: "Lesson was not found."});
