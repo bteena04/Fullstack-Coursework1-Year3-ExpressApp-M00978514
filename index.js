@@ -15,7 +15,10 @@ const { text } = require("stream/consumers");
 
 // Create the express app.
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "https://bteena04.github.io",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+}));
 app.use(express.json());
 app.set('json spaces', 3);  
 
