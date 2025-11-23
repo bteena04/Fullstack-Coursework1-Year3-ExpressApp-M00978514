@@ -1,5 +1,5 @@
 # Fullstack-Coursework1-Year3-ExpressApp-M00978514
-This is the backend repository of the XLearning website that allows buying school classes and activities.
+This is the backend repository of the XLearning website that allows buying after school classes and activities.
 
 ## Required links for the web app
 1. GitHub Repository for the Vue.js App: https://github.com/bteena04/Fullstack-Coursework1-Year3-M00978514.git 
@@ -9,6 +9,7 @@ This is the backend repository of the XLearning website that allows buying schoo
 
 
 ## Project folder structure
+
 The folder structure is as follows:
 │Fullstack-Coursework1-Year3-ExpressApp-M00978514/
 │
@@ -49,7 +50,7 @@ The folder structure is as follows:
 
 ### 3. Search route:
 - `GET /lessons/search` - Search lessons by description, subject, location, price, or available spaces.
-    >Example usage: `/lessons/search?keyword=maths`
+>Example usage: `/lessons/search?keyword=maths`
 
 ### 4. Route for serving static files.
 Static files such as images and stored in the public folder inside the images/lessons directory.

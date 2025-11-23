@@ -16,11 +16,10 @@ const { text } = require("stream/consumers");
 
 // Create the express app.
 const app = express();
-app.use(cors({}));
-// app.use(cors({
-//   origin: process.env.FRONTEND_URL,
-//   methods: ["GET", "POST", "PUT", "DELETE"],
-// }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+}));
 app.use(express.json());
 app.set('json spaces', 3);  
 
