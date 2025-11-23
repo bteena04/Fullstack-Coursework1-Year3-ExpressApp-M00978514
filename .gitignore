@@ -4,4 +4,7 @@ node_modules/
 # Ignore log files
 server.log
 
-dbconnection.properties
+# Ignore database connection properties
+dbconnection.properties/
+
+.env

@@ -19,17 +19,14 @@ export const orderSchema = Joi.object({
         'string.empty': 'Phone number is required.'
     }),
 
-    address: Joi.string()
-    .required()
-    .messages({
-        'string.empty': 'Address is required.'
-    }),
-
     lessons: Joi.array()
     .items(Joi.string().required()) // or Joi.string().hex().length(24) for Mongo ObjectId
     .required()
     .messages({
         'array.base': 'Lessons must be an array of lesson IDs.',
         'any.required': 'Lessons are required.'
-    })
+    }),
+    
+    orderDate: Joi.string()
+    .required()
 });

@@ -1,6 +1,7 @@
 // index.js file
 
 // Import required modules.
+const dotenv = require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ObjectId } = require("mongodb");
@@ -15,10 +16,11 @@ const { text } = require("stream/consumers");
 
 // Create the express app.
 const app = express();
-app.use(cors({
-  origin: "https://bteena04.github.io",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-}));
+app.use(cors({}));
+// app.use(cors({
+//   origin: process.env.FRONTEND_URL,
+//   methods: ["GET", "POST", "PUT", "DELETE"],
+// }));
 app.use(express.json());
 app.set('json spaces', 3);  
 
@@ -27,7 +29,7 @@ const PORT = process.env.PORT || 3000;
 
 // Listen on the specified port.
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
 
 // -----------------------------
@@ -37,14 +39,13 @@ const properties = PropertiesReader(propertiesPath);
 
 const dbPrefix = properties.get('db.prefix');   
 const dbHost = properties.get('db.host');       
-const dbName = 'XLearning';                      
+const dbName = properties.get('db.name');                      
 const dbUser = properties.get('db.user');       
 const dbPassword = properties.get('db.password'); 
 const dbParams = properties.get('db.params');   
 
 // Build MongoDB URI
-const uri = `${dbPrefix}${dbUser}:${dbPassword}${dbHost}${dbParams}`;
-const client = new MongoClient(uri);
+const client = new MongoClient(process.env.MONGO_URI);
 
 // Global variable for the database connection.
 let db1; 
@@ -63,8 +64,6 @@ async function connectDB() {
 
 // Connect to the database when the server starts.
 connectDB();
-
-
 
 // ------------------------------ Create a logger file -----------------------------
 const logFile = path.join(__dirname, 'server.log');
@@ -126,19 +125,22 @@ app.use('/collections', (req,res,next) => {
         console.log("Database not connected.");
         return res.status(500).send({message:" Database not connected. Please try again later."});
     }
+    console.log("Database connected.");
     next();
 });
 
 // Attach collection to req
 app.param('collectionName', (req, res, next, collectionName) => {
-    req.collection = db1.collection(collectionName)
-    next();
+    try {
+        req.collection = db1.collection(collectionName);
+        next();
+    } catch (err) {
+        next(err);
+    }
 });
 
 // GET all documents
 app.get('/collections/:collectionName', async (req, res) => {
-    // console.log("Requesting collection:", req.params.collectionName);
-    // console.log("Mongo collection object:", req.collection);
     try {
         const docs = await req.collection.find({}).toArray();
         res.json(docs);
@@ -167,13 +169,13 @@ app.post('/checkout/place-order', async (req, res) => {
             return res.status(400).json({message: "Invalid order data", errors: errorMessages});
         }
         console.error("Error placing order:", err);
-        res.status(500).send({message: "Error placing order"});
+        res.status(500).send({message: "Error placing order. Please try again later."});
     }
 });
 
 // Get lesson item(s) by search query.
-app.get('/collections/:collectionName/search', async (req, res) => {
-    const searchValue = req.query.search;
+app.get('/lessons/search', async (req, res) => {
+    const searchValue = req.query.keyword;
 
     if (!searchValue) {
         // return default all items if no search parameter provided.
@@ -181,8 +183,7 @@ app.get('/collections/:collectionName/search', async (req, res) => {
     }
 
     // Check search value field type.
-    let isValueNumber = /^\d+(\.\d+)?$/.test(searchValue);
-    let numericSearchValue = Number(searchValue);
+    let numericSearchValue = Number(searchValue); // Numeric value check
 
     const textFields = ["description","subject","location"];
     const numberFields = ["price", "available"];
@@ -193,20 +194,20 @@ app.get('/collections/:collectionName/search', async (req, res) => {
     // Add text search fields.
     filters.push(...textFields.map(field=> ({ [field] : textRegex})));
 
-    // Add number search fields.
+    // Add number search fields. (No regex for number fields).
     filters.push(...numberFields.map(field => ({ [field]: numericSearchValue })))
 
     // Create the filter query.
     const filterQuery = { $or: filters};
 
     try {
-        const lessons = await req.collection.find(filterQuery).toArray();
+        let lessonSearchDb = db1.collection("lessons");
+        const lessons = await lessonSearchDb.find(filterQuery).toArray();
         res.json(lessons);
     } catch (err) {
         res.status(500).json({ message: "Search error", error: err.message });
     }
 });
-
 
 // Get item by ID
 app.get('/collections/:collectionName/:id',async(req,res)=>{
