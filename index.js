@@ -124,7 +124,6 @@ app.use('/collections', (req,res,next) => {
         console.log("Database not connected.");
         return res.status(500).send({message:" Database not connected. Please try again later."});
     }
-    console.log("Database connected.");
     next();
 });
 
@@ -151,6 +150,9 @@ app.get('/collections/:collectionName', async (req, res) => {
 
 // POST to place an order.
 app.post('/checkout/place-order', async (req, res) => {
+    const orderDate = new Date();
+    const formattedOrderDate = orderDate.toLocaleString();
+
     try {
         // Validate order data.
         const validatedOrder = await orderSchema.validateAsync(req.body, {abortEarly: false});
@@ -158,11 +160,12 @@ app.post('/checkout/place-order', async (req, res) => {
         const result = await db1.collection("orders").insertOne(validatedOrder);
         
         res.status(201).send({
-            message: "Order placed successfully",
+            message: `Order placed successfully at ${formattedOrderDate}. Order ID: ${result.insertedId}`,
             orderId: result.insertedId
         });
     } catch(err){
         if(err.isJoi){
+             console.log("isJoi?", err.isJoi);
             const errorMessages = err.details.map(details => details.message);
             console.log("Order validation errors:", errorMessages);
             return res.status(400).json({message: "Invalid order data", errors: errorMessages});
@@ -174,12 +177,15 @@ app.post('/checkout/place-order', async (req, res) => {
 
 // Get lesson item(s) by search query.
 app.get('/lessons/search', async (req, res) => {
-    const searchValue = req.query.keyword;
+    let searchValue = req.query.keyword;
 
     if (!searchValue) {
         // return default all items if no search parameter provided.
         return res.status(400).json({ message: "Missing search parameter" });
     }
+
+    // Escape special characters in the user input
+    searchValue = searchValue.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 
     // Check search value field type.
     let numericSearchValue = Number(searchValue); // Numeric value check

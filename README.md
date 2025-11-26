@@ -11,7 +11,8 @@ This is the backend repository of the XLearning website that allows buying after
 ## Project folder structure
 
 The folder structure is as follows:
-│Fullstack-Coursework1-Year3-ExpressApp-M00978514/
+```text
+|Fullstack-Coursework1-Year3-ExpressApp-M00978514/
 │
 ├─ config # database configuration
 ├─ helper 
@@ -23,39 +24,44 @@ The folder structure is as follows:
 ├─ package.json
 ├─ server.log
 ├─ README.md
+```
 
 ## Setup instructions
 1. Navigate to the backend folder (Fullstack-Coursework1-Year3-ExpressApp-M00978514).
 2. Create a .env file with the following codes:
+``` javascript
     PORT=3000
     MONGO_URI=<your-atlas-connection-string>
     FRONTEND_URL=<your-frontend-URL>
+```
 3. Install dependencies using the bash command: `npm install`.
-    >Important!: Omitting the FRONTEND_URL from the .env file will cause the backend to block request from the frontend.
+    >Important: Omitting the FRONTEND_URL from the .env file will cause the backend to block request from the frontend.
 4. To start the server, run the bash command: `npm start`.
-    >This should output a message 'Server is running on port 3000' to the console to indicate that the server is running correctly.
+    >This should output a message `Server is running on port 3000` to the console to indicate that the server is running correctly.
 
 ## Api Routes
 
-### 1. Lesson routes:
+### 1. Health routes:
 - `GET /` - Get server status.
 - `GET /collections` - All requests to the database are exposed under this path.
+
+### 2. Lesson routes:
 - `GET /collections/lessons` - Get all lessons.
 - `GET /collections/lessons/:id` - Get a lesson by its ID.
 - `PUT /collections/lessons/:id` - Update a lesson by its ID.
 
-### 2. Order routes:
+### 3. Order routes:
 - `GET /collections/orders` - Get all orders.
 - `POST /checkout/place-order` - Create a new order.
 
-### 3. Search route:
+### 4. Search route:
 - `GET /lessons/search` - Search lessons by description, subject, location, price, or available spaces.
 >Example usage: `/lessons/search?keyword=maths`
 
-### 4. Route for serving static files.
+### 5. Route for serving static files.
 Static files such as images and stored in the public folder inside the images/lessons directory.
 - `GET /lesson-images` - Serves lesson images from the public/images/lessons directory.
-> Example Usage: lesson-images/maths.jpg. If images is not found, a 404 error response is returned.
+    >Example Usage: lesson-images/maths.jpg. If images is not found, a 404 error response is returned.
 
 
 
